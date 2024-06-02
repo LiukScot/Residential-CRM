@@ -1,0 +1,23 @@
+function getTechnicalDataById(dataSheetId, id) {
+  var dataSheet = SpreadsheetApp.openById(dataSheetId);
+  var sheet = dataSheet.getSheetByName('cronologia');
+  var data = sheet.getDataRange().getValues();
+  var header = data[0];
+  var idColumnIndex = header.indexOf("id");
+
+  if (idColumnIndex === -1) {
+    throw new Error('Colonna "id" non trovata.');
+  }
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][idColumnIndex] == id) {
+      return data[i];
+    }
+  }
+  throw new Error('ID non trovato nel file dei dati tecnici.');
+}
+
+function addTechnicalData(destinationSheet, data) {
+  var lastRow = destinationSheet.getLastRow() + 1;
+  destinationSheet.getRange(lastRow, 1, 1, data.length).setValues([data]);
+}
