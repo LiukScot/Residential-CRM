@@ -1,0 +1,20 @@
+list(
+    round(
+        (
+            (
+                (
+                    [Totale costo materiali] + 
+                    [Totale costo servizi] + 
+                    [Costi aggiuntivi]
+                ) / (1 - [Margine %])
+                + [Costi aggiuntivi senza margine]
+                + [costo totale rete antipiccione]
+                + [costo totale ottimizzatori]
+                + [costo totale linea vita]
+                + [costo totale colonnina 22kw]
+                + [costo totale colonnina 7,4 kw]
+            ) * (1 + [Provvigione %])
+        ) * (1 + [IVA])
+        / 50
+    ) * 50
+)
