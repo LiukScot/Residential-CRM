@@ -24,9 +24,9 @@ function stampaOffertaTEST(tipo_opportunita, id, nome, cognome, indirizzo, telef
     cartellaDataId = DriveApp.getFolderById(cartellaContrattoId).createFolder(nomeCartellaData).getId();
   }
 
-  var offertaStandard = '10HvhPMSPYG-vG-4r4C6Bd6cizT0YuZLMfQ9_smgTOds';
+  var offertaStandard = '1XYDLbJymoNqU8B1nYqJm0k52-SU5O19G1Xzph_rjShg';
   var offertaMateriale = '1gMJGZZA7LwdugXKEFTK5LbJU2iiIIs6Ee5zBnlW81es';
-  var offertaConLayout = '1dOsSzOQa30u7I2Z4FnU0guxiilO_VmsEjZ23UIrB1d0';
+  var offertaConLayout = '1XYDLbJymoNqU8B1nYqJm0k52-SU5O19G1Xzph_rjShg';
   var contratto = '1_PNr5Y6svOADvgKZIjFjKsoDFpNV6TkOxivLIVqcZdA';
 
   var datiDocumento = [];
@@ -113,13 +113,70 @@ function stampaOffertaTEST(tipo_opportunita, id, nome, cognome, indirizzo, telef
 
     doc.saveAndClose();
   });
+  
+  
+  //SOSTITUZIONE PREZZO PER MODIFICARE GRAFICO
 
-  var datiTecnici = LibrerieMyenergySolutions.getTechnicalDataById('1_QEo5ynx_29j3I3uJJff5g7ZzGZJnPcIarIXfr5O2gQ', id);
-  var cartellaProgetto = DriveApp.getFolderById(cartellaDestinazioneId).getFoldersByName('progetto');
-  var cartellaProgettoId = cartellaProgetto.hasNext() ? cartellaProgetto.next().getId() : DriveApp.getFolderById(cartellaDestinazioneId).createFolder('progetto').getId();
+    // Ottenere il foglio per il grafico del risparmio
+    var foglioPerGrafico = SpreadsheetApp.openById('16SAos3lDQfubpCNUe_rkXk91Ur19M4upS0G3lSpYuZk');
+    
+    // Verificare se prezzo_offerta è vuoto
+    if (prezzo_offerta !== "") {
+      // Incollare il valore di prezzo_offerta nella cella B2
+      foglioPerGrafico.getActiveSheet().getRange('B2').setValue(prezzo_offerta);
+    }
 
-  var fileDatiTecnici = DriveApp.getFolderById(cartellaProgettoId).getFilesByName('dati tecnici');
-  var nuovoFileDatiTecnici = fileDatiTecnici.hasNext() ? SpreadsheetApp.openById(fileDatiTecnici.next().getId()) : SpreadsheetApp.openById(DriveApp.getFileById('1U2kbWlfl9-LO1j-pNPbLNdVreJb8Gej4W13kjMyxq0k').makeCopy('dati tecnici', DriveApp.getFolderById(cartellaProgettoId)).getId());
 
-  LibrerieMyenergySolutions.addTechnicalData(nuovoFileDatiTecnici.getActiveSheet(), datiTecnici);
+  // GESTISCI FILE SHEET "dati tecnici"
+
+    // Estrai l'ultima offerta generata da sheet "CRM database", sheet "cronologia"
+      var CRMdatabase = SpreadsheetApp.openById('1WtxISvCYKJyX8c9blp8ROJcd0v-UrFDeUFUpfL9h7Wg');
+      var sheetCronologia = CRMdatabase.getSheetByName('cronologia');
+      var data = sheetCronologia.getDataRange().getValues();
+
+    // Trova la colonna con header "id"
+      var colonnaIdIndex = data[0].indexOf("id");
+      if (colonnaIdIndex === -1) {
+      throw new Error('Colonna "id" non trovata.');
+      }
+
+      Logger.log('Cercando ID nella colonna: ' + (colonnaIdIndex + 1));
+      var rigaDaCopiare = null;
+      for (var i = 1; i < data.length; i++) {
+      Logger.log('Controllando riga ' + (i + 1) + ', valore ID: ' + data[i][colonnaIdIndex]);
+      if (data[i][colonnaIdIndex] == id) {
+      rigaDaCopiare = data[i];
+      Logger.log('Trovato ID alla riga: ' + (i + 1));
+      break;
+      }
+      }
+      if (!rigaDaCopiare) {
+      throw new Error('ID non trovato nel file dei dati tecnici.');
+      }
+  
+    //crea cartella "progetto"
+      var nomeFileDatiTecnici = 'dati tecnici';
+      var cartellaProgetto = DriveApp.getFolderById(cartellaDestinazioneId).getFoldersByName('progetto');
+      var cartellaProgettoId;
+      if (cartellaProgetto.hasNext()) {
+      cartellaProgettoId = cartellaProgetto.next().getId();
+      } else {
+      var nuovaCartellaProgetto = DriveApp.getFolderById(cartellaDestinazioneId).createFolder('progetto');
+      cartellaProgettoId = nuovaCartellaProgetto.getId();
+      }
+    
+    //crea o aggiorna "dati tecnici"
+      var fileDatiTecnici = DriveApp.getFolderById(cartellaProgettoId).getFilesByName(nomeFileDatiTecnici);
+      var nuovoFileDatiTecnici;
+      if (fileDatiTecnici.hasNext()) {
+      nuovoFileDatiTecnici = SpreadsheetApp.openById(fileDatiTecnici.next().getId());
+      } else {
+      var modelloDatiTecnici = DriveApp.getFileById('1lOUBcCT3j38sBtuXBJ2MuQqKttvCmecq_JDkQWG3n7M').makeCopy('dati tecnici', DriveApp.getFolderById(cartellaProgettoId));
+      nuovoFileDatiTecnici = SpreadsheetApp.openById(modelloDatiTecnici.getId());
+      }
+      
+    //aggiorna i valori nel foglio "log" con l'ultima offerta generata
+      var nuovoSheet = nuovoFileDatiTecnici.getActiveSheet();
+      var ultimaRigaVuota = nuovoSheet.getLastRow() + 1;
+      nuovoSheet.getRange(ultimaRigaVuota, 1, 1, rigaDaCopiare.length).setValues([rigaDaCopiare]);
 }

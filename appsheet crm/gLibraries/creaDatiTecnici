@@ -1,6 +1,6 @@
-function getTechnicalDataById(dataSheetId, id) {
+function getTechnicalDataById(dataSheetId, id, kwh_annui, profilo_consumi) {
   var dataSheet = SpreadsheetApp.openById(dataSheetId);
-  var sheet = dataSheet.getSheetByName('cronologia');
+  var sheet = dataSheet.getSheetById('1lOUBcCT3j38sBtuXBJ2MuQqKttvCmecq_JDkQWG3n7M');
   var data = sheet.getDataRange().getValues();
   var header = data[0];
   var idColumnIndex = header.indexOf("id");
