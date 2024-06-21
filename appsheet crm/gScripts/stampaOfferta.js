@@ -1,4 +1,11 @@
-function stampaOffertaTEST(tipo_opportunita, id, nome, cognome, indirizzo, telefono, email, numero_moduli, numero_inverter, marca_moduli, marca_inverter, numero_batteria, capacita_batteria, totale_capacita_batterie, marca_batteria, tetto, potenza_impianto, produzione_impianto, risparmio_25_anni, alberi, testo_aggiuntivo, tipo_pagamento, condizione_pagamento_1, condizione_pagamento_2, condizione_pagamento_3, condizione_pagamento_4, imponibile_offerta, iva_offerta, prezzo_offerta, cartella, anni_finanziamento, conLayout, esposizione, area_m2_impianto, numero_colonnina_74kw, numero_colonnina_22kw, numero_ottimizzatori, marca_ottimizzatori, numero_linea_vita, scheda_tecnica_moduli, scheda_tecnica_inverter, scheda_tecnica_batterie, scheda_tecnica_ottimizzatori, detrazione) {
+function stampaOffertaV2(tipo_opportunita, id, nome, cognome, indirizzo, telefono, email, numero_moduli, numero_inverter, marca_moduli, 
+                        marca_inverter, numero_batteria, capacita_batteria, totale_capacita_batterie, marca_batteria, tetto, 
+                        potenza_impianto, produzione_impianto, risparmio_25_anni, alberi, testo_aggiuntivo, tipo_pagamento, 
+                        condizione_pagamento_1, condizione_pagamento_2, condizione_pagamento_3, condizione_pagamento_4, imponibile_offerta,
+                        iva_offerta, prezzo_offerta, cartella, anni_finanziamento, conLayout, esposizione, area_m2_impianto, 
+                        numero_colonnina_74kw, numero_colonnina_22kw, numero_ottimizzatori, marca_ottimizzatori, numero_linea_vita, 
+                        scheda_tecnica_moduli, scheda_tecnica_inverter, scheda_tecnica_batterie, scheda_tecnica_ottimizzatori, 
+                        detrazione, risparmio_25_anni, percentuale_risparmio, anni_ritorno_investimento, utile_25_anni) {
 
   var oggi = new Date();
   var data = new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(oggi);
@@ -24,7 +31,7 @@ function stampaOffertaTEST(tipo_opportunita, id, nome, cognome, indirizzo, telef
     cartellaDataId = DriveApp.getFolderById(cartellaContrattoId).createFolder(nomeCartellaData).getId();
   }
 
-  var offertaStandard = '1XYDLbJymoNqU8B1nYqJm0k52-SU5O19G1Xzph_rjShg';
+  var offertaStandard = '1xD-SJW37SF8vkS7G8XAAj_uSNMpm0hSeIoUyfMC8Irg';
   var offertaMateriale = '1gMJGZZA7LwdugXKEFTK5LbJU2iiIIs6Ee5zBnlW81es';
   var offertaConLayout = '1XYDLbJymoNqU8B1nYqJm0k52-SU5O19G1Xzph_rjShg';
   var contratto = '1_PNr5Y6svOADvgKZIjFjKsoDFpNV6TkOxivLIVqcZdA';
@@ -90,7 +97,6 @@ function stampaOffertaTEST(tipo_opportunita, id, nome, cognome, indirizzo, telef
       '{{imponibile_offerta}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(imponibile_offerta),
       '{{iva_offerta}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(iva_offerta),
       '{{prezzo_offerta}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(prezzo_offerta),
-      '{{detrazione}}': detrazione,
       '{{anni_finanziamento}}': new Intl.NumberFormat('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(anni_finanziamento),
       '{{esposizione}}': esposizione,
       '{{area_m2_impianto}}': new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(area_m2_impianto),
@@ -103,6 +109,11 @@ function stampaOffertaTEST(tipo_opportunita, id, nome, cognome, indirizzo, telef
       '{{numero_ottimizzatori}}': numero_ottimizzatori,
       '{{marca_ottimizzatori}}': marca_ottimizzatori,
       '{{numero_linea_vita}}': numero_linea_vita,
+      '{{risparmio_25_anni}}': new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(risparmio_25_anni),
+      '{{detrazione}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(detrazione),
+      '{{percentuale_risparmio}}': percentuale_risparmio,
+      '{{anni_ritorno_investimento}}': new Intl.NumberFormat('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(anni_ritorno_investimento),
+      '{{utile_25_anni}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(utile_25_anni),
     };
 
     LibrerieMyenergySolutions.replacePlaceholders(corpo, mappaturaSegnapostov2);
@@ -130,7 +141,7 @@ function stampaOffertaTEST(tipo_opportunita, id, nome, cognome, indirizzo, telef
   // GESTISCI FILE SHEET "dati tecnici"
 
     // Estrai l'ultima offerta generata da sheet "CRM database", sheet "cronologia"
-      var CRMdatabase = SpreadsheetApp.openById('1WtxISvCYKJyX8c9blp8ROJcd0v-UrFDeUFUpfL9h7Wg');
+      var CRMdatabase = SpreadsheetApp.openById('1_QEo5ynx_29j3I3uJJff5g7ZzGZJnPcIarIXfr5O2gQ');
       var sheetCronologia = CRMdatabase.getSheetByName('cronologia');
       var data = sheetCronologia.getDataRange().getValues();
 

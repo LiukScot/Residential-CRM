@@ -1,7 +1,7 @@
-function creaCartelle(tipoOpportunita, id, nome, cognome) {
+function creaCartelle(tipoOpportunita, id, yy, nome, cognome) {
   const parentFolderId = "1kpBsmlPAaeCFWvgCEIw38tEk5Q-xQpH_"; // ID della cartella madre
   const parentFolder = DriveApp.getFolderById(parentFolderId);
-  const folderName = `${tipoOpportunita}-${id} ${nome} ${cognome}`;
+  const folderName = `${tipoOpportunita}-${id}-${yy} ${nome} ${cognome}`;
   const sheetId = "1_QEo5ynx_29j3I3uJJff5g7ZzGZJnPcIarIXfr5O2gQ"; // ID del foglio di Google
   const sheetName = "cronologia"; // Nome della pagina nel foglio di Google
 
