@@ -58,7 +58,8 @@ function stampaOffertaV2(tipo_opportunita, id, nome, cognome, indirizzo, telefon
 
     datiDocumento.push({
       templateId: contratto,
-      nomeFile: "Offerta " + LibrerieMyenergySolutions.validaValore(tipo_opportunita) + "-" + LibrerieMyenergySolutions.validaValore(id) + " " + LibrerieMyenergySolutions.validaValore(nome) + " " + LibrerieMyenergySolutions.validaValore(cognome) + " " + LibrerieMyenergySolutions.validaValore(data)
+      nomeFile: "Offerta " + LibrerieMyenergySolutions.validaValore(tipo_opportunita) + "-" + LibrerieMyenergySolutions.validaValore(id) + "-" + LibrerieMyenergySolutions.validaValore(yy)
+                + " " + LibrerieMyenergySolutions.validaValore(nome) + " " + LibrerieMyenergySolutions.validaValore(cognome) + " " + LibrerieMyenergySolutions.validaValore(data)
     });
   }
 
