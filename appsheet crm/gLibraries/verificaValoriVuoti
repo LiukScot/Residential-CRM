@@ -1,9 +1,0 @@
-// ValidaValore.gs
-function validaValore(valore) {
-  if (valore === null || valore === undefined) {
-    return "-";
-  } else if (typeof valore === 'number') {
-    return valore.toString();
-  }
-  return valore;
-}
