@@ -1,320 +1,538 @@
+/**
+ * ==============================================
+ *        SCRIPT DI GENERAZIONE OFFERTA V2
+ * ==============================================
+ *
+ * Questo script automatizza la generazione di documenti di offerta
+ * basandosi su template predefiniti e dati forniti dall'utente.
+ * Gestisce la creazione e l'organizzazione di cartelle su Google Drive,
+ * l'elaborazione di dati tecnici ed energetici, e la sostituzione
+ * di segnaposto nei documenti finali.
+ *
+ * Autore: Luca
+ * Link GPT: https://chatgpt.com/c/33d84469-fd54-4ff4-a0e5-0a3a947a185a
+ * Data: 22-08-24
+ * Versione: 5.1
+ */
+
+/** ===============================
+ *       IMPORTAZIONE LIBRERIE
+ *  ===============================
+ */
+// Importa eventuali librerie esterne se necessarie
+// Esempio: const moment = require('moment');
+
+/** ===============================
+ *       COSTANTI GLOBALI
+ *  ===============================
+ */
+
+// Definizione globale di TEMPLATES
+const TEMPLATES = {
+  presentazioneFinanz: '1zMIjekT-K_JWssZidSBjSuog_LfcHZjMLcEbePnP_t8',
+  offertaMateriale: '1gMJGZZA7LwdugXKEFTK5LbJU2iiIIs6Ee5zBnlW81es',
+  presentazione: '1XYDLbJymoNqU8B1nYqJm0k52-SU5O19G1Xzph_rjShg',
+  contratto: '1_PNr5Y6svOADvgKZIjFjKsoDFpNV6TkOxivLIVqcZdA',
+  contrattoREDEN: '1mFtXfWCxKv2y4-kbkRLugrDx_Hnih_ZkMmFto0RtSVU',
+  contrattoGSE: '1t5S9CYogDPAtKhy2ejMVELKjAkkieqfu31eIFF06GYg',
+  contrattoFinanz: '1RCr8lgM98ryQwMiGFqecMHiWgIHsPN0tfV5HN82eYr4'
+};
+
+//nome del file dati tecnici creato per il cliente
+const nomeFileDatiTecnici = 'dati tecnici v4.1';
+
+/** ===============================
+*       FUNZIONI PRINCIPALI
+*  ===============================
+*/
+
+/**
+* Esegue l'intero processo di generazione dell'offerta.
+*
+* @param {string} appID - ID dell'applicazione/opportunità.
+* @param {Object} inputData - Dati di input necessari per la generazione dell'offerta.
+*/
+
+
+// Funzione principale
 function stampaOffertaV2(appID, tipo_opportunita, id, yy, nome, cognome, indirizzo, telefono, email, numero_moduli, numero_inverter, marca_moduli, 
-  marca_inverter, numero_batteria, capacita_batteria, totale_capacita_batterie, marca_batteria, tetto, 
-  potenza_impianto, produzione_impianto, alberi, testo_aggiuntivo, tipo_pagamento, 
-  condizione_pagamento_1, condizione_pagamento_2, condizione_pagamento_3, condizione_pagamento_4, imponibile_offerta,
-  iva_offerta, prezzo_offerta, cartella, anni_finanziamento, conLayout, esposizione, area_m2_impianto, 
-  numero_colonnina_74kw, numero_colonnina_22kw, numero_ottimizzatori, marca_ottimizzatori, numero_linea_vita, 
-  scheda_tecnica_moduli, scheda_tecnica_inverter, scheda_tecnica_batterie, scheda_tecnica_ottimizzatori, 
-  detrazione, anni_ritorno_investimento, utile_25_anni, consumi_annui, 
-  profilo_di_consumo, provincia, prezzo_energia, rata_mensile, numero_rate_mensili, anni_finanziamento) {
+                      marca_inverter, numero_batteria, capacita_batteria, totale_capacita_batterie, marca_batteria, tetto, 
+                      potenza_impianto, produzione_impianto, alberi, testo_aggiuntivo, tipo_pagamento, 
+                      condizione_pagamento_1, condizione_pagamento_2, condizione_pagamento_3, condizione_pagamento_4, imponibile_offerta,
+                      iva_offerta, prezzo_offerta, cartella, anni_finanziamento, esposizione, area_m2_impianto, 
+                      numero_colonnina_74kw, numero_colonnina_22kw, numero_ottimizzatori, marca_ottimizzatori, numero_linea_vita, 
+                      scheda_tecnica_moduli, scheda_tecnica_inverter, scheda_tecnica_batterie, scheda_tecnica_ottimizzatori, 
+                      detrazione, consumi_annui, 
+                      profilo_di_consumo, provincia, prezzo_energia, rata_mensile, numero_rate_mensili, anni_finanziamento) {
 
-// Log per debug
-Logger.log('Tipo opportunità: ' + tipo_opportunita);
+Logger.log('Avvio funzione stampaOffertaV2 per appID: ' + appID);
 
-//CREA SOTTOCARTELLA "contratto"
+// Creazione stringa di data nel formato 'dd/mm/yyyy'
+const oggi = new Date();
+const dataOggi = new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(oggi);
+Logger.log('Data odierna: ' + dataOggi);
+
+// Ripristino del metodo originale per ottenere l'ID della cartella di destinazione
 var cartellaDestinazioneId = cartella.split('/folders/')[1];
-var oggi = new Date();
-var dataOggi = new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(oggi);
+Logger.log('ID della cartella principale: ' + cartellaDestinazioneId);
 
-// Creazione della sottocartella "contratto"
-var cartellaContratto = DriveApp.getFolderById(cartellaDestinazioneId).getFoldersByName('contratto');
-var cartellaContrattoId;
-if (cartellaContratto.hasNext()) {
-cartellaContrattoId = cartellaContratto.next().getId();
-} else {
-cartellaContrattoId = DriveApp.getFolderById(cartellaDestinazioneId).createFolder('contratto').getId();
-}
+// Recupero o creazione della cartella "contratto"
+var cartellaContrattoId = getOrCreateSubfolder(cartellaDestinazioneId, 'contratto');
+Logger.log('Cartella contratto ID: ' + cartellaContrattoId);
 
-// Creazione della sottocartella con la data
-var nomeCartellaData = dataOggi;
-var cartellaData = DriveApp.getFolderById(cartellaContrattoId).getFoldersByName(nomeCartellaData);
-var cartellaDataId;
-if (cartellaData.hasNext()) {
-cartellaDataId = cartellaData.next().getId();
-} else {
-cartellaDataId = DriveApp.getFolderById(cartellaContrattoId).createFolder(nomeCartellaData).getId();
-}
+// Creazione della cartella con la data odierna
+var cartellaDataId = getOrCreateSubfolder(cartellaContrattoId, dataOggi);
+Logger.log('Cartella con la data ID: ' + cartellaDataId);
 
-var datiDocumento = [];
+// Determina i template dei documenti da usare in base al tipo di opportunità e pagamento
+const datiDocumento = determineDocumentTemplates(tipo_opportunita, tipo_pagamento, nome, cognome, dataOggi, id, yy);
+Logger.log('Dati documenti: ' + JSON.stringify(datiDocumento));
 
-//SCELTA DEI MODELLI DI OFFERTA
-var presentazioneFinanz = '1zMIjekT-K_JWssZidSBjSuog_LfcHZjMLcEbePnP_t8' //v2
-var offertaMateriale = '1gMJGZZA7LwdugXKEFTK5LbJU2iiIIs6Ee5zBnlW81es'; 
-var presentazione = '1XYDLbJymoNqU8B1nYqJm0k52-SU5O19G1Xzph_rjShg'; //v2
-var contratto = '1_PNr5Y6svOADvgKZIjFjKsoDFpNV6TkOxivLIVqcZdA';
-var contrattoREDEN = '1mFtXfWCxKv2y4-kbkRLugrDx_Hnih_ZkMmFto0RtSVU';
-var contrattoGSE = '1t5S9CYogDPAtKhy2ejMVELKjAkkieqfu31eIFF06GYg';
-var contrattoFinanz = '1RCr8lgM98ryQwMiGFqecMHiWgIHsPN0tfV5HN82eYr4'; //v2
-
-if (tipo_opportunita === "MAT") {
-datiDocumento.push({
-templateId: offertaMateriale,
-nomeFile: "Offerta Myenergy " + nome + " " + cognome + " " + dataOggi
-});
-} else {
-if (tipo_pagamento === "Finanziamento") {
-datiDocumento.push({
-templateId: presentazioneFinanz,
-nomeFile: "Presentazione offerta Myenergy " + nome + " " + cognome
-});
-} else {
-datiDocumento.push({
-templateId: presentazione,
-nomeFile: "Presentazione offerta Myenergy " + nome + " " + cognome
-});
-}
-
-if (tipo_opportunita === "REDEN") {
-datiDocumento.push({
-templateId: contrattoREDEN,
-nomeFile: "Offerta " + tipo_opportunita + "-" + id + "-" + yy+ " " + nome + " " + cognome + " " + dataOggi
-});
-datiDocumento.push({
-templateId: contrattoGSE,
-nomeFile: "Contratto GSE " + tipo_opportunita + "-" + id + "-" + yy + " " + nome + " " + cognome + " " + dataOggi
-});
-} else if (tipo_pagamento === 'Finanziamento') {
-datiDocumento.push({
-templateId: contrattoFinanz,
-nomeFile: "Offerta " + tipo_opportunita + "-" + id + "-" + yy + " " + nome + " " + cognome + " " + dataOggi
-});
-} else {
-datiDocumento.push({
-templateId: contratto,
-nomeFile: "Offerta " + tipo_opportunita + "-" + id + "-" + yy + " " + nome + " " + cognome + " " + dataOggi
-});
-}
-}
-
-// Se non è MAT, esegui le operazioni specifiche per altri tipi di opportunità
+// Se l'opportunità non è di tipo "MAT", esegue operazioni aggiuntive
 if (tipo_opportunita !== "MAT") {
-
-// CREA FILE SHEET "dati tecnici"
-
-// Estrai l'ultima offerta generata da sheet "CRM database", sheet "cronologia"
-var CRMdatabase = SpreadsheetApp.openById('1_QEo5ynx_29j3I3uJJff5g7ZzGZJnPcIarIXfr5O2gQ');
-var sheetOfferte = CRMdatabase.getSheetByName('offerte');
-var data = sheetOfferte.getDataRange().getValues();
-
-
-
-
-// Trova la colonna "appID" nell'header
-var header = data[0];
-var appIDColIndex = header.indexOf('appID');
-
-if (appIDColIndex === -1) {
-throw new Error('Colonna "appID" non trovata');
-}
-
-// Trova la riga con il valore corrispondente di appID
-var selectedRow = null;
-for (var i = 1; i < data.length; i++) {
-if (data[i][appIDColIndex] === appID) {
-selectedRow = data[i];
-break;
-}
-}
-
-if (selectedRow === null) {
-throw new Error('Nessuna riga trovata con appID: ' + appID);
+  Logger.log('Esecuzione operazioni aggiuntive per tipo_opportunita: ' + tipo_opportunita);
+  processAdditionalOperations(appID, cartella, consumi_annui, profilo_di_consumo, provincia, esposizione);
 }
 
 
+// Prepara il file dati tecnici
+var cartellaProgettoId = getOrCreateSubfolder(cartellaDestinazioneId, 'progetto');
+  Logger.log('ID cartella progetto: ' + cartellaProgettoId);
 
-// crea cartella "progetto"
-var nomeFileDatiTecnici = 'dati tecnici v4';
-var cartellaProgetto = DriveApp.getFolderById(cartellaDestinazioneId).getFoldersByName('progetto');
-var cartellaProgettoId;
-if (cartellaProgetto.hasNext()) {
-cartellaProgettoId = cartellaProgetto.next().getId();
-} else {
-var nuovaCartellaProgetto = DriveApp.getFolderById(cartellaDestinazioneId).createFolder('progetto');
-cartellaProgettoId = nuovaCartellaProgetto.getId();
-}
-
-// crea o aggiorna "dati tecnici"
 var fileDatiTecnici = DriveApp.getFolderById(cartellaProgettoId).getFilesByName(nomeFileDatiTecnici);
 var nuovoFileDatiTecnici;
 if (fileDatiTecnici.hasNext()) {
-nuovoFileDatiTecnici = SpreadsheetApp.openById(fileDatiTecnici.next().getId());
+      nuovoFileDatiTecnici = SpreadsheetApp.openById(fileDatiTecnici.next().getId());
+      Logger.log('File dati tecnici esistente trovato e aperto: ' + nuovoFileDatiTecnici.getId());
 } else {
-var modelloDatiTecnici = DriveApp.getFileById('1cPaLSSNlz5snyD4q3vBCLlpIGsKtiOaKrvsmoi_8SCk').makeCopy(nomeFileDatiTecnici, DriveApp.getFolderById(cartellaProgettoId));
-nuovoFileDatiTecnici = SpreadsheetApp.openById(modelloDatiTecnici.getId());
+      var modelloDatiTecnici = DriveApp.getFileById('1cPaLSSNlz5snyD4q3vBCLlpIGsKtiOaKrvsmoi_8SCk').makeCopy(nomeFileDatiTecnici, DriveApp.getFolderById(cartellaProgettoId));
+      nuovoFileDatiTecnici = SpreadsheetApp.openById(modelloDatiTecnici.getId());
+      Logger.log('Nuovo file dati tecnici creato: ' + nuovoFileDatiTecnici.getId());
 }
 
-// aggiorna i valori nel foglio "log" con l'ultima offerta generata
-var nuovoSheet = nuovoFileDatiTecnici.getActiveSheet();
-var ultimaRigaVuota = nuovoSheet.getLastRow() + 1;
-nuovoSheet.getRange(ultimaRigaVuota, 1, 1, selectedRow.length).setValues([selectedRow]);
+  
+// Chiamata per catturare i risultati dell'analisi energetica
+  const energyAnalysisResults = processEnergyAnalysis(nuovoFileDatiTecnici, consumi_annui, profilo_di_consumo, provincia, esposizione, appID);
 
-/* Trova l'indice della colonna con header "id" nel foglio "log"
-var headers = nuovoSheet.getRange(1, 1, 1, nuovoSheet.getLastColumn()).getValues()[0];
-var colonnaIdIndex = headers.indexOf("appID") + 1; // Aggiungiamo 1 perché gli indici delle colonne partono da 1 in Apps Script
+// Compila i documenti dell'offerta sostituendo i segnaposto con i valori corretti
+datiDocumento.forEach(dato => {
+  const doc = createDocumentFromTemplate(dato.templateId, cartellaDataId, dato.nomeFile);
+  const corpo = doc.getBody();
+  let mappaturaSegnapostov2 = createPlaceholderMapping({
+      tipo_opportunita, id, yy, nome, cognome, indirizzo, telefono, email, dataOggi, numero_moduli, marca_moduli, numero_inverter, 
+      marca_inverter, numero_batteria, capacita_batteria, totale_capacita_batterie, marca_batteria, tetto, potenza_impianto, 
+      produzione_impianto, alberi, testo_aggiuntivo, tipo_pagamento, condizione_pagamento_1, condizione_pagamento_2, 
+      condizione_pagamento_3, condizione_pagamento_4, imponibile_offerta, iva_offerta, prezzo_offerta, anni_finanziamento, 
+      rata_mensile, numero_rate_mensili, esposizione, area_m2_impianto, scheda_tecnica_moduli, scheda_tecnica_inverter, 
+      scheda_tecnica_batterie, scheda_tecnica_ottimizzatori, numero_colonnina_74kw, numero_colonnina_22kw, numero_ottimizzatori, 
+      marca_ottimizzatori, numero_linea_vita, detrazione, 
+      anni_ritorno_investimento: energyAnalysisResults.anni_ritorno_investimento,
+      utile_25_anni: energyAnalysisResults.utile_25_anni,
+      percentuale_autoconsumo: energyAnalysisResults.percentuale_autoconsumo,
+      media_vendita: energyAnalysisResults.media_vendita,
+      prezzo_energia, 
+      percentuale_risparmio_energetico: energyAnalysisResults.percentuale_risparmio_energetico
+  });
 
-// Aggiungi la lettera corrispondente alla riga alla fine del valore "id" e riporta il valore come variabile di testo
-var offerID = "";
-if (colonnaIdIndex > 0) { // Controlla se la colonna "id" esiste
-var idValue = nuovoSheet.getRange(ultimaRigaVuota, colonnaIdIndex).getValue();
-var lettera = String.fromCharCode(64 + (ultimaRigaVuota - 2)); // Ajusta per iniziare da 'A' per la riga 3
-offerID = idValue + lettera; // Aggiorna il valore nell'ID
-nuovoSheet.getRange(ultimaRigaVuota, colonnaIdIndex).setValue(offerID);
+  replacePlaceholders(corpo, mappaturaSegnapostov2);
+  addHyperlink(corpo, 'Link scheda tecnica moduli', scheda_tecnica_moduli);
+  addHyperlink(corpo, 'Link scheda tecnica inverter', scheda_tecnica_inverter);
+  addHyperlink(corpo, 'Link scheda tecnica batterie', scheda_tecnica_batterie);
+  addHyperlink(corpo, 'Link scheda tecnica ottimizzatori', scheda_tecnica_ottimizzatori);
+
+  doc.saveAndClose();
+  Logger.log('Documento generato: ' + dato.nomeFile);
+});
+
+Logger.log('Fine esecuzione funzione stampaOffertaV2');
 }
+
+
+/** ===============================
+*       FUNZIONI HELPER
+*  ===============================
 */
 
-// INCOLLA E PRENDI DATI DA "ANALISI ENERGETICA"
+/**
+* Crea o ottiene una sottocartella in una cartella specificata.
+*
+* @param {string} parentFolderId - ID della cartella principale.
+* @param {string} folderName - Nome della sottocartella da creare o ottenere.
+* @returns {string} ID della sottocartella.
+*/
+function getOrCreateSubfolder(parentFolderId, folderName) {
+  Logger.log('Verifica ID cartella: ' + parentFolderId);
+  try {
+      // Estrai l'ID se è un URL
+      if (parentFolderId.indexOf('folders/') !== -1) {
+          parentFolderId = parentFolderId.split('/folders/')[1];
+          Logger.log('Estratto ID della cartella dall\'URL: ' + parentFolderId);
+      }
+      
+      var parentFolder = DriveApp.getFolderById(parentFolderId);
+      Logger.log('Cartella trovata: ' + parentFolder.getName());
+      var subfolderIterator = parentFolder.getFoldersByName(folderName);
+      var subfolderId;
+      if (subfolderIterator.hasNext()) {
+          subfolderId = subfolderIterator.next().getId();
+          Logger.log('Sottocartella esistente trovata, ID: ' + subfolderId);
+      } else {
+          var newFolder = parentFolder.createFolder(folderName);
+          subfolderId = newFolder.getId();
+          Logger.log('Nuova sottocartella creata, ID: ' + subfolderId);
+      }
+      return subfolderId;
+  } catch (error) {
+      Logger.log('Errore durante la ricerca o creazione della sottocartella: ' + error.message);
+      throw error;
+  }
+}
 
-// Apri il foglio "analisi energetica"
-var sheetAnalisiEnergetica = nuovoFileDatiTecnici.getSheetByName('analisi energetica');
+/**
+* Determina i template dei documenti da utilizzare in base al tipo di opportunità e al tipo di pagamento.
+*
 
-// Sostituisci le celle denominate con le variabili
-sheetAnalisiEnergetica.getRange('consumi_annui').setValue(consumi_annui);
-sheetAnalisiEnergetica.getRange('profilo_di_consumo').setValue(profilo_di_consumo);
-sheetAnalisiEnergetica.getRange('provincia').setValue(provincia);
-sheetAnalisiEnergetica.getRange('esposizione').setValue(esposizione);
-sheetAnalisiEnergetica.getRange('offerta_analizzata').setValue(appID);
+* @param {string} dataOggi - Data corrente formattata.
+* @param {string} id - ID dell'offerta.
+* @param {string} yy - Anno.
+* @returns {Array} Array di oggetti contenenti templateId e nomeFile per ogni documento da creare.
+*/
+function determineDocumentTemplates(tipo_opportunita, tipo_pagamento, nome, cognome, dataOggi, id, yy) {
+Logger.log('Determinazione dei template per tipo_opportunita: ' + tipo_opportunita + ', tipo_pagamento: ' + tipo_pagamento);
+const templates = [];
 
-// Leggi i valori dalle celle denominate e assegnali alle variabili
-var percentuale_autoconsumo = sheetAnalisiEnergetica.getRange('percentuale_autoconsumo').getValue();
-var media_vendita = sheetAnalisiEnergetica.getRange('media_vendita').getValue();
-var anni_ritorno_investimento = sheetAnalisiEnergetica.getRange('anni_ritorno_investimento').getValue();
-var percentuale_risparmio_energetico = sheetAnalisiEnergetica.getRange('percentuale_risparmio_energetico').getValue();
-var utile_25_anni = sheetAnalisiEnergetica.getRange('utile_25_anni').getValue();
+if (tipo_opportunita === "MAT") {
+  templates.push({
+    templateId: TEMPLATES.offertaMateriale,
+    nomeFile: `Offerta Myenergy ${nome} ${cognome} ${dataOggi}`
+  });
+} else {
+  const presentazioneTemplate = tipo_pagamento === "Finanziamento" ? TEMPLATES.presentazioneFinanz : TEMPLATES.presentazione;
+  templates.push({
+    templateId: presentazioneTemplate,
+    nomeFile: `Presentazione offerta Myenergy ${nome} ${cognome}`
+  });
 
-// MODIFICA DEL GRAFICO DI RITORNO ANNUO
+  if (tipo_opportunita === "REDEN") {
+    templates.push({
+      templateId: TEMPLATES.contrattoREDEN,
+      nomeFile: `Offerta ${tipo_opportunita}-${id}-${yy} ${nome} ${cognome} ${dataOggi}`
+    }, {
+      templateId: TEMPLATES.contrattoGSE,
+      nomeFile: `Contratto GSE ${tipo_opportunita}-${id}-${yy} ${nome} ${cognome} ${dataOggi}`
+    });
+  } else {
+    const contrattoTemplate = tipo_pagamento === "Finanziamento" ? TEMPLATES.contrattoFinanz : TEMPLATES.contratto;
+    templates.push({
+      templateId: contrattoTemplate,
+      nomeFile: `Offerta ${tipo_opportunita}-${id}-${yy} ${nome} ${cognome} ${dataOggi}`
+    });
+  }
+}
 
-// Ottenere il foglio per il grafico del risparmio
+Logger.log('Template selezionati: ' + JSON.stringify(templates));
+return templates;
+}
+
+/**
+* Esegue operazioni aggiuntive per opportunità non di tipo "MAT".
+*
+* @param {string} appID - ID specifico dell'offerta in appSheet.
+* @param {string} cartella - ID della cartella principale.
+*/
+function processAdditionalOperations(appID, cartella, consumi_annui, profilo_di_consumo, provincia, esposizione) {
+Logger.log('Esecuzione delle operazioni aggiuntive per appID: ' + appID);
+
+const cartellaProgettoId = getOrCreateSubfolder(cartella, 'progetto');
+Logger.log('ID cartella progetto: ' + cartellaProgettoId);
+
+const nuovoFileDatiTecnici = createOrUpdateTechnicalDataFile(cartellaProgettoId, nomeFileDatiTecnici);
+
+updateTechnicalDataLog(nuovoFileDatiTecnici, appID);
+
+processEnergyAnalysis(nuovoFileDatiTecnici, consumi_annui, profilo_di_consumo, provincia, esposizione, appID);
+
+modifyReturnGraph(nuovoFileDatiTecnici);
+}
+
+/**
+* Crea o aggiorna il file dei dati tecnici nella cartella progetto.
+*
+* @param {string} cartellaProgettoId - ID della cartella progetto.
+* @param {string} nomeFileDatiTecnici - Nome del file dati tecnici.
+* @returns {Spreadsheet} Riferimento al file di dati tecnici aperto o creato.
+*/
+function createOrUpdateTechnicalDataFile(cartellaProgettoId, nomeFileDatiTecnici) {
+Logger.log('Creazione o aggiornamento del file dati tecnici: ' + nomeFileDatiTecnici);
+const fileDatiTecniciIterator = DriveApp.getFolderById(cartellaProgettoId).getFilesByName(nomeFileDatiTecnici);
+const fileId = fileDatiTecniciIterator.hasNext() 
+  ? fileDatiTecniciIterator.next().getId()
+  : DriveApp.getFileById('1cPaLSSNlz5snyD4q3vBCLlpIGsKtiOaKrvsmoi_8SCk').makeCopy(nomeFileDatiTecnici, DriveApp.getFolderById(cartellaProgettoId)).getId();
+Logger.log('ID file dati tecnici: ' + fileId);
+return SpreadsheetApp.openById(fileId);
+}
+
+/**
+* Aggiorna il log dei dati tecnici con l'ultima offerta generata.
+*
+* @param {Spreadsheet} nuovoFileDatiTecnici - Riferimento al file di dati tecnici appena creato.
+* @param {string} appID - ID di appSheet relativo all'offerta
+*/
+function updateTechnicalDataLog(nuovoFileDatiTecnici, appID) {
+Logger.log('Aggiornamento log dati tecnici per appID: ' + appID);
+
+const CRMdatabase = SpreadsheetApp.openById('1_QEo5ynx_29j3I3uJJff5g7ZzGZJnPcIarIXfr5O2gQ');
+const sheetOfferte = CRMdatabase.getSheetByName('offerte');
+const data = sheetOfferte.getDataRange().getValues();
+const appIDColIndex = data[0].indexOf('appID');
+
+if (appIDColIndex === -1) throw new Error('Colonna "appID" non trovata');
+
+const selectedRow = data.find(row => row[appIDColIndex] === appID);
+if (!selectedRow) throw new Error('Nessuna riga trovata con appID: ' + appID);
+
+const nuovoSheet = nuovoFileDatiTecnici.getActiveSheet();
+const ultimaRigaVuota = nuovoSheet.getLastRow() + 1;
+nuovoSheet.getRange(ultimaRigaVuota, 1, 1, selectedRow.length).setValues([selectedRow]);
+
+Logger.log('Log dati tecnici aggiornato con successo.');
+}
+
+/**
+* Gestisce l'analisi energetica all'interno del file dei dati tecnici.
+*
+* @param {Spreadsheet} nuovoFileDatiTecnici - Riferimento al file di dati tecnici appena creato.
+* @param {string} appID - ID di appSheet relativo all'offerta
+*/
+function processEnergyAnalysis(nuovoFileDatiTecnici, consumi_annui, profilo_di_consumo, provincia, esposizione, appID) {
+  Logger.log('Esecuzione dell\'analisi energetica per appID: ' + appID);
+  
+  const sheetAnalisiEnergetica = nuovoFileDatiTecnici.getSheetByName('analisi energetica');
+  sheetAnalisiEnergetica.getRange('consumi_annui').setValue(consumi_annui);
+  sheetAnalisiEnergetica.getRange('profilo_di_consumo').setValue(profilo_di_consumo);
+  sheetAnalisiEnergetica.getRange('provincia').setValue(provincia);
+  sheetAnalisiEnergetica.getRange('esposizione').setValue(esposizione);
+  sheetAnalisiEnergetica.getRange('offerta_analizzata').setValue(appID);
+
+  var percentuale_autoconsumo = sheetAnalisiEnergetica.getRange('percentuale_autoconsumo').getValue();
+  var media_vendita = sheetAnalisiEnergetica.getRange('media_vendita').getValue();
+  var anni_ritorno_investimento = sheetAnalisiEnergetica.getRange('anni_ritorno_investimento').getValue();
+  var percentuale_risparmio_energetico = sheetAnalisiEnergetica.getRange('percentuale_risparmio_energetico').getValue();
+  var utile_25_anni = sheetAnalisiEnergetica.getRange('utile_25_anni').getValue();
+
+  Logger.log('Analisi energetica completata.');
+
+  // Restituisci i valori calcolati
+  return {
+      percentuale_autoconsumo,
+      media_vendita,
+      anni_ritorno_investimento,
+      percentuale_risparmio_energetico,
+      utile_25_anni
+  };
+}
+
+/**
+* Estrae i valori da un intervallo denominato in un foglio di calcolo.
+*
+* @param {Sheet} sheet - Il foglio di calcolo da cui estrarre i valori.
+* @param {string} rangeName - Il nome dell'intervallo denominato.
+* @returns {Array} I valori dell'intervallo denominato.
+*/
+function getNamedRangeValues(sheet, rangeName) {
+  var range = sheet.getRange(rangeName);
+  if (!range) {
+      throw new Error('Intervallo denominato "' + rangeName + '" non trovato nel foglio "' + sheet.getName() + '".');
+  }
+  return range.getValues();
+}
+
+/**
+* Modifica il grafico di ritorno annuo nel foglio di calcolo associato.
+*
+* @param {Spreadsheet} nuovoFileDatiTecnici - Riferimento al file di dati tecnici appena creato.
+*/
+function modifyReturnGraph(nuovoFileDatiTecnici) {
+Logger.log('Modifica del grafico di ritorno annuo.');
+
 const grafico = SpreadsheetApp.openById('1cfLNo1WU-poleX1i4hg9fynUP53i06d_6DpIlbFZcTc');
 const foglio1GRAFICO = grafico.getSheetByName('foglio1');
 
-// Apri il foglio "calcoli" sempre in dati tecnici
 const sheetCalcoliDATITECNICI = nuovoFileDatiTecnici.getSheetByName('calcoli');
-if (!sheetCalcoliDATITECNICI) {
-throw new Error('Foglio "calcoli" non trovato.');
-}
+const valoriUtile25AnniGrafico = getNamedRangeValues(sheetCalcoliDATITECNICI, 'utile_25_anni_grafico');
 
-// Copia il valore delle celle denominate "utile_25_anni_grafico"
-var valoriUtile25AnniGrafico = getNamedRangeValues(sheetCalcoliDATITECNICI, 'utile_25_anni_grafico');
-
-function getNamedRangeValues(sheet, rangeName) {
-var range = sheet.getRange(rangeName);
-if (!range) {
-throw new Error('Intervallo denominato "' + rangeName + '" non trovato nel foglio "' + sheet.getName() + '".');
-}
-return range.getValues();
-}
-
-// Incolla i valori nel foglio grafico in colonna B
 foglio1GRAFICO.getRange(1, 2, valoriUtile25AnniGrafico.length, valoriUtile25AnniGrafico[0].length).setValues(valoriUtile25AnniGrafico);
+
+Logger.log('Grafico di ritorno annuo aggiornato.');
 }
 
-//COMPILA DOC OFFERTA CON LE VARIABILI
-
-datiDocumento.forEach(function(dato) {
-var doc = createDocumentFromTemplate(dato.templateId, cartellaDataId, dato.nomeFile);
-var corpo = doc.getBody();
-var mappaturaSegnapostov2 = {
-'{{tipo_opportunità}}': tipo_opportunita,
-'{{id}}': id,
-'{{yy}}': yy,
-'{{nome}}': nome,
-'{{cognome}}': cognome,
-'{{indirizzo}}': indirizzo,
-'{{telefono}}': telefono,
-'{{email}}': email,
-'{{data ultima modifica}}': dataOggi,
-'{{numero_moduli}}': numero_moduli,
-'{{marca_moduli}}': marca_moduli,
-'{{numero_inverter}}': numero_inverter,
-'{{marca_inverter}}': marca_inverter,
-'{{numero_batteria}}': numero_batteria,
-'{{capacità batteria}}': capacita_batteria,
-'{{totale_capacità_batterie}}': totale_capacita_batterie,
-'{{marca_batteria}}': marca_batteria,
-'{{tetto}}': tetto,
-'{{potenza_impianto}}': new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(potenza_impianto),
-'{{produzione_impianto}}': new Intl.NumberFormat('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(produzione_impianto),
-'{{alberi}}': new Intl.NumberFormat('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(alberi),
-'{{testo_aggiuntivo}}': testo_aggiuntivo,
-'{{tipo_pagamento}}': tipo_pagamento,
-'{{condizione_pagamento_1}}': condizione_pagamento_1,
-'{{condizione_pagamento_2}}': condizione_pagamento_2,
-'{{condizione_pagamento_3}}': condizione_pagamento_3,
-'{{condizione_pagamento_4}}': condizione_pagamento_4,
-'{{imponibile_offerta}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(imponibile_offerta),
-'{{iva_offerta}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(iva_offerta),
-'{{prezzo_offerta}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(prezzo_offerta),
-'{{anni_finanziamento}}': new Intl.NumberFormat('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(anni_finanziamento),
-'{{rata_mensile}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rata_mensile),
-'{{numero_rate_mensili}}': new Intl.NumberFormat('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(numero_rate_mensili),
-'{{esposizione}}': esposizione,
-'{{area_m2_impianto}}': new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(area_m2_impianto),
-'{{scheda_tecnica_moduli}}': 'Link scheda tecnica moduli',
-'{{scheda_tecnica_inverter}}': 'Link scheda tecnica inverter',
-'{{scheda_tecnica_batterie}}': 'Link scheda tecnica batterie',
-'{{scheda_tecnica_ottimizzatori}}': 'Link scheda tecnica ottimizzatori',
-'{{numero_colonnina_74kw}}': numero_colonnina_74kw,
-'{{numero_colonnina_22kw}}': numero_colonnina_22kw,
-'{{numero_ottimizzatori}}': numero_ottimizzatori,
-'{{marca_ottimizzatori}}': marca_ottimizzatori,
-'{{numero_linea_vita}}': numero_linea_vita,
-'{{detrazione}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(detrazione),
-'{{anni_ritorno_investimento}}': new Intl.NumberFormat('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(anni_ritorno_investimento),
-'{{utile_25_anni}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(utile_25_anni),
-'{{percentuale_autoconsumo}}': new Intl.NumberFormat('it-IT', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(percentuale_autoconsumo),
-'{{media_vendita}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(media_vendita),
-'{{prezzo_energia}}': new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(prezzo_energia),
-'{{percentuale_risparmio_energetico}}': new Intl.NumberFormat('it-IT', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(percentuale_risparmio_energetico),
+/**
+* Crea una mappatura dei segnaposto con i valori forniti come input.
+*
+* @param {Object} params - Oggetto contenente tutti i parametri necessari per la mappatura.
+* @returns {Object} Mappatura dei segnaposto con i relativi valori.
+*/
+function createPlaceholderMapping(params) {
+Logger.log('Creazione della mappatura dei segnaposto.');
+return {
+  '{{tipo_opportunità}}': params.tipo_opportunita,
+  '{{id}}': params.id,
+  '{{yy}}': params.yy,
+  '{{nome}}': params.nome,
+  '{{cognome}}': params.cognome,
+  '{{indirizzo}}': params.indirizzo,
+  '{{telefono}}': params.telefono,
+  '{{email}}': params.email,
+  '{{data ultima modifica}}': params.dataOggi,
+  '{{numero_moduli}}': params.numero_moduli,
+  '{{marca_moduli}}': params.marca_moduli,
+  '{{numero_inverter}}': params.numero_inverter,
+  '{{marca_inverter}}': params.marca_inverter,
+  '{{numero_batteria}}': params.numero_batteria,
+  '{{capacità batteria}}': params.capacita_batteria,
+  '{{totale_capacità_batterie}}': params.totale_capacita_batterie,
+  '{{marca_batteria}}': params.marca_batteria,
+  '{{tetto}}': params.tetto,
+  '{{potenza_impianto}}': formatNumber(params.potenza_impianto, 2),
+  '{{produzione_impianto}}': formatNumber(params.produzione_impianto, 0),
+  '{{alberi}}': formatNumber(params.alberi, 0),
+  '{{testo_aggiuntivo}}': params.testo_aggiuntivo,
+  '{{tipo_pagamento}}': params.tipo_pagamento,
+  '{{condizione_pagamento_1}}': params.condizione_pagamento_1,
+  '{{condizione_pagamento_2}}': params.condizione_pagamento_2,
+  '{{condizione_pagamento_3}}': params.condizione_pagamento_3,
+  '{{condizione_pagamento_4}}': params.condizione_pagamento_4,
+  '{{imponibile_offerta}}': formatCurrency(params.imponibile_offerta),
+  '{{iva_offerta}}': formatCurrency(params.iva_offerta),
+  '{{prezzo_offerta}}': formatCurrency(params.prezzo_offerta),
+  '{{anni_finanziamento}}': formatNumber(params.anni_finanziamento, 0),
+  '{{rata_mensile}}': formatCurrency(params.rata_mensile),
+  '{{numero_rate_mensili}}': formatNumber(params.numero_rate_mensili, 0),
+  '{{esposizione}}': params.esposizione,
+  '{{area_m2_impianto}}': formatNumber(params.area_m2_impianto, 2),
+  '{{scheda_tecnica_moduli}}': 'Link scheda tecnica moduli',
+  '{{scheda_tecnica_inverter}}': 'Link scheda tecnica inverter',
+  '{{scheda_tecnica_batterie}}': 'Link scheda tecnica batterie',
+  '{{scheda_tecnica_ottimizzatori}}': 'Link scheda tecnica ottimizzatori',
+  '{{numero_colonnina_74kw}}': params.numero_colonnina_74kw,
+  '{{numero_colonnina_22kw}}': params.numero_colonnina_22kw,
+  '{{numero_ottimizzatori}}': params.numero_ottimizzatori,
+  '{{marca_ottimizzatori}}': params.marca_ottimizzatori,
+  '{{numero_linea_vita}}': params.numero_linea_vita,
+  '{{detrazione}}': formatCurrency(params.detrazione),
+  '{{anni_ritorno_investimento}}': formatNumber(params.anni_ritorno_investimento, 1),
+  '{{utile_25_anni}}': formatCurrency(params.utile_25_anni),
+  '{{percentuale_autoconsumo}}': formatPercentage(params.percentuale_autoconsumo),
+  '{{media_vendita}}': formatCurrency(params.media_vendita),
+  '{{prezzo_energia}}': formatCurrency(params.prezzo_energia),
+  '{{percentuale_risparmio_energetico}}': formatPercentage(params.percentuale_risparmio_energetico)
 };
-
-// sostiuisci i placeholder con i valori corretti
-replacePlaceholders(corpo, mappaturaSegnapostov2);
-addHyperlink(corpo, 'Link scheda tecnica moduli', scheda_tecnica_moduli);
-addHyperlink(corpo, 'Link scheda tecnica inverter', scheda_tecnica_inverter);
-addHyperlink(corpo, 'Link scheda tecnica batterie', scheda_tecnica_batterie);
-addHyperlink(corpo, 'Link scheda tecnica ottimizzatori', scheda_tecnica_ottimizzatori);
-
-doc.saveAndClose();
-
-// Log each variable for debugging
-for (var key in mappaturaSegnapostov2) {
-if (mappaturaSegnapostov2.hasOwnProperty(key)) {
-Logger.log(key + ': ' + mappaturaSegnapostov2[key]);
-}
 }
 
-});
+/**
+* Formatta un numero con il numero specificato di decimali.
+*
+* @param {number} value - Numero da formattare.
+* @param {number} decimals - Numero di decimali.
+* @returns {string} Numero formattato.
+*/
+function formatNumber(value, decimals) {
+return new Intl.NumberFormat('it-IT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value);
 }
 
+/**
+* Formatta un valore come valuta.
+*
+* @param {number} value - Valore da formattare.
+* @returns {string} Valore formattato come valuta.
+*/
+function formatCurrency(value) {
+return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+}
 
+/**
+* Formatta un valore come percentuale.
+*
+* @param {number} value - Valore da formattare.
+* @returns {string} Valore formattato come percentuale.
+*/
+function formatPercentage(value) {
+return new Intl.NumberFormat('it-IT', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+}
 
-
-// FUNZIONI CHIAMATE DALLO SCRIPT stampaOffertaV2
-
-// Funzione per creare un documento da un template
+/**
+* Crea un documento da un template e lo salva in una cartella specificata.
+*
+* @param {string} templateId - ID del template da usare.
+* @param {string} destinationFolderId - ID della cartella di destinazione.
+* @param {string} fileName - Nome del file da creare.
+* @returns {Document} Riferimento al documento creato.
+*/
 function createDocumentFromTemplate(templateId, destinationFolderId, fileName) {
-var documentCopy = DriveApp.getFileById(templateId).makeCopy(fileName, DriveApp.getFolderById(destinationFolderId));
+Logger.log('Creazione del documento da template ID: ' + templateId);
+const documentCopy = DriveApp.getFileById(templateId).makeCopy(fileName, DriveApp.getFolderById(destinationFolderId));
+Logger.log('Documento creato: ' + fileName);
 return DocumentApp.openById(documentCopy.getId());
 }
 
-// Funzione per sostituire i segnaposto con i valori nel documento
+/**
+* Funzione per sostituire i segnaposto con i valori nel documento.
+* Sostituisce i valori vuoti con un trattino (-).
+*
+* @param {Body} body - Il corpo del documento Google Docs.
+* @param {Object} placeholders - Oggetto mappa che contiene i segnaposto e i loro valori.
+*/
 function replacePlaceholders(body, placeholders) {
-Object.keys(placeholders).forEach(function(placeholder) {
-var value = placeholders[placeholder];
-if (value !== null && value !== undefined && value !== "") { // Verifica che il valore sia valido
-body.replaceText(placeholder, value.toString()); // Converte il valore in stringa per evitare errori
-}
-});
+  Object.keys(placeholders).forEach(function(placeholder) {
+      let value = placeholders[placeholder];
+      if (value === null || value === undefined || value === "") {
+          value = "-"; // Sostituisci valori vuoti, null o undefined con un trattino
+      }
+      body.replaceText(placeholder, value.toString());
+  });
 }
 
-// Funzione per aggiungere un hyperlink
+/**
+* Aggiunge un hyperlink a un testo specificato all'interno di un documento.
+*
+* @param {Body} corpo - Corpo del documento.
+* @param {string} searchText - Testo da cercare e sostituire con un link.
+* @param {string} url - URL da collegare al testo.
+*/
 function addHyperlink(corpo, searchText, url) {
-var foundElement = corpo.findText(searchText);
+Logger.log('Aggiunta di un hyperlink al testo: ' + searchText);
+let foundElement = corpo.findText(searchText);
 while (foundElement) {
-var foundText = foundElement.getElement().asText();
-var startOffset = foundElement.getStartOffset();
-var endOffset = foundElement.getEndOffsetInclusive();
-foundText.setLinkUrl(startOffset, endOffset, url);
-foundElement = corpo.findText(searchText, foundElement);
+  const foundText = foundElement.getElement().asText();
+  const startOffset = foundElement.getStartOffset();
+  const endOffset = foundElement.getEndOffsetInclusive();
+  foundText.setLinkUrl(startOffset, endOffset, url);
+  foundElement = corpo.findText(searchText, foundElement);
 }
+Logger.log('Hyperlink aggiunto.');
+}
+
+
+/** ===============================
+*       DEBUG SCRIPT
+*  ===============================
+*/
+
+// Dati di esempio per l'esecuzione
+const exampleInputData = {
+appID: '5bd33768',
+id: 'RES-6741-24',
+nome: 'Mario',
+cognome: 'Rossi',
+indirizzo: 'Via Roma 1, Milano',
+telefono: '1234567890',
+email: 'mario.rossi@example.com',
+tipo_opportunita: 'RES',
+tipo_pagamento: 'Acquisto diretto',
+// Aggiungi altri campi necessari...
+};
+
+// Esecuzione dello script con i dati di esempio
+function runStampaOffertaV2() {
+stampaOffertaV2(exampleInputData.appID, exampleInputData);
 }
